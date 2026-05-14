@@ -1,16 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { adminUpdateUserSchema, validateBody } from '@/lib/validations';
+import type { PaginatedResponse } from '@/lib/types';
 
-export async function GET() {
+// GET /api/admin/users?page=&limit=
+export async function GET(request: NextRequest) {
   try {
-    const users = await db.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: { select: { listings: true } },
-      },
-    });
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
 
-    const result = users.map((u) => ({
+    const [users, total] = await Promise.all([
+      db.user.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          _count: { select: { listings: true } },
+        },
+      }),
+      db.user.count(),
+    ]);
+
+    const data = users.map((u) => ({
       id: u.id,
       name: u.name,
       email: u.email,
@@ -26,7 +38,15 @@ export async function GET() {
       _count: u._count,
     }));
 
-    return NextResponse.json(result);
+    const response: PaginatedResponse<typeof data[number]> = {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Admin users error:', error);
     return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
@@ -37,16 +57,11 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, role, isVerified, isActive } = body as {
-      userId: string;
-      role?: string;
-      isVerified?: boolean;
-      isActive?: boolean;
-    };
-
-    if (!userId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    const validation = validateBody(adminUpdateUserSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+    const { userId, role, isVerified, isActive } = validation.data;
 
     const updateData: Record<string, unknown> = {};
     if (role) updateData.role = role;

@@ -16,6 +16,7 @@ import {
   ImageIcon,
   ChevronLeft,
   ChevronRight,
+  MessageSquare,
 } from 'lucide-react';
 import {
   Dialog,
@@ -25,10 +26,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/hooks/use-i18n';
 import { useModalStore } from '@/lib/modal-store';
+import { useSession } from 'next-auth/react';
 import { TierBadge } from '@/components/shared/TierBadge';
 import { CategoryBadge } from '@/components/shared/CategoryBadge';
 import { formatPrice, getRelativeTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 export function ListingDetailModal() {
   const { locale, tp } = useI18n();
@@ -37,7 +40,10 @@ export function ListingDetailModal() {
     isListingDetailOpen,
     closeListingDetail,
     openListingFullView,
+    openMessage,
+    openAuth,
   } = useModalStore();
+  const { data: session } = useSession();
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -51,7 +57,7 @@ export function ListingDetailModal() {
       if (overlay) {
         overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
         overlay.style.backdropFilter = 'blur(4px)';
-        overlay.style.webkitBackdropFilter = 'blur(4px)';
+        (overlay.style as unknown as Record<string, string>)['webkitBackdropFilter'] = 'blur(4px)';
         clearInterval(interval);
       }
     }, 50);
@@ -93,13 +99,15 @@ export function ListingDetailModal() {
         {/* Image Carousel — horizontal scroll with thumbnails */}
         <div className="relative">
           {/* Main image */}
-          <div className="aspect-[4/3] w-full bg-muted overflow-hidden">
+          <div className="relative aspect-[4/3] w-full bg-muted overflow-hidden">
             {images.length > 0 ? (
               <>
-                <img
+                <Image
                   src={images[currentImageIndex]}
                   alt={listing.title}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover"
                 />
                 {/* Image nav arrows */}
                 {images.length > 1 && (
@@ -143,13 +151,13 @@ export function ListingDetailModal() {
                   key={i}
                   onClick={() => setCurrentImageIndex(i)}
                   className={cn(
-                    'flex-shrink-0 w-14 h-14 rounded-md overflow-hidden border-2 transition-all',
+                    'relative flex-shrink-0 w-14 h-14 rounded-md overflow-hidden border-2 transition-all',
                     i === currentImageIndex
                       ? 'border-primary opacity-100'
                       : 'border-transparent opacity-50 hover:opacity-80'
                   )}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <Image src={img} alt="" fill sizes="56px" className="object-cover" />
                 </button>
               ))}
             </div>
@@ -225,6 +233,26 @@ export function ListingDetailModal() {
           <div className="flex gap-2 pt-1">
             <Button
               className="flex-1 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm"
+              onClick={() => {
+                if (!session?.user?.id) {
+                  openAuth();
+                  return;
+                }
+                openMessage({
+                  receiverId: listing.author.id,
+                  receiverName: listing.author.name,
+                  listingId: listing.id,
+                  listingTitle: listing.title,
+                  listingImage: listing.images?.[0],
+                });
+              }}
+            >
+              <MessageSquare className="size-4" />
+              {tp('listings', 'contact')}
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 gap-2 text-sm"
               onClick={handleViewFull}
             >
               <Maximize2 className="size-4" />

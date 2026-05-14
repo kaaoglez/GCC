@@ -15,7 +15,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import type { RecyclingPointDTO } from '@/lib/types';
 
 export function RecyclingSection() {
-  const { tp } = useI18n();
+  const { t, tp } = useI18n();
   const [points, setPoints] = useState<RecyclingPointDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,9 +44,9 @@ export function RecyclingSection() {
       transition={{ duration: 0.5 }}
     >
       <SectionContainer
-        title={tp('recycling', 'title')}
-        subtitle={tp('recycling', 'subtitle')}
-        action={{ label: tp('recycling', 'viewMap'), href: '/reciclaje' }}
+        title={t('recycling', 'title')}
+        subtitle={t('recycling', 'subtitle')}
+        action={{ label: t('recycling', 'viewMap'), href: '/reciclaje' }}
       >
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

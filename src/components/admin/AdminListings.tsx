@@ -356,7 +356,7 @@ export function AdminListings() {
                     className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: plan?.color + '20', color: plan?.color }}
                   >
-                    {getIcon(plan?.icon || 'circle', 'w-4 h-4')}
+                    {getIcon('circle', 'w-4 h-4')}
                   </div>
                   <div className="flex-1 text-left">
                     <p className="font-medium text-sm">{locale === 'es' ? plan?.nameEs : plan?.nameEn}</p>

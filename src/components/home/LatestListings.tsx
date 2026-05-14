@@ -15,7 +15,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import type { ListingDTO, PaginatedResponse } from '@/lib/types';
 
 export function LatestListings() {
-  const { tp } = useI18n();
+  const { t, tp } = useI18n();
   const [listings, setListings] = useState<ListingDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,8 +48,8 @@ export function LatestListings() {
       transition={{ duration: 0.5 }}
     >
       <SectionContainer
-        title={tp('listings', 'latest')}
-        action={{ label: tp('listings', 'viewAll'), href: '/anuncios' }}
+        title={t('listings', 'latest')}
+        action={{ label: t('listings', 'viewAll'), href: '/anuncios' }}
       >
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

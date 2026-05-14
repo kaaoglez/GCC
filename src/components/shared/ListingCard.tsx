@@ -13,6 +13,7 @@ import { getIcon } from '@/lib/icons';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatPrice, getRelativeTime, truncateText } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 import { useModalStore } from '@/lib/modal-store';
 import { MapPin, ShieldCheck, ImageOff } from 'lucide-react';
 import type { ListingDTO } from '@/lib/types';
@@ -78,10 +79,12 @@ export function ListingCard({ listing, className, onClick }: ListingCardProps) {
         {/* Image */}
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
           {image ? (
-            <img
+            <Image
               src={image}
               alt={listing.title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-muted-foreground">

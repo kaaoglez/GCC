@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Poppins, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { SessionProvider } from "@/components/providers/SessionProvider";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -65,15 +66,17 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${poppins.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster />
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

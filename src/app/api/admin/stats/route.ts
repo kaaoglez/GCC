@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { mapListingToDTO } from '@/app/api/listings/route';
+import { mapListingToDTO } from '@/lib/map-listing';
 
 interface PaymentDTO {
   id: string;

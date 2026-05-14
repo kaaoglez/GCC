@@ -6,7 +6,8 @@
 'use client';
 
 import { useI18n } from '@/hooks/use-i18n';
-import { useModalStore } from '@/lib/modal-store';
+import { type PageView } from '@/lib/modal-store';
+import { navigateTo } from '@/hooks/use-navigation';
 import { cn } from '@/lib/utils';
 import { ArrowRight } from 'lucide-react';
 import type { TranslationString } from '@/lib/types';
@@ -23,6 +24,15 @@ interface SectionContainerProps {
   /** If true, hides the section on mobile and shows it on md+ */
   hideOnMobile?: boolean;
 }
+
+const VIEW_MAP: Record<string, PageView> = {
+  '/anuncios': 'anuncios',
+  '/categorias': 'categorias',
+  '/eventos': 'eventos',
+  '/noticias': 'news',
+  '/reciclaje': 'recycling',
+  '/directorio': 'directory',
+};
 
 export function SectionContainer({
   title,
@@ -58,13 +68,8 @@ export function SectionContainer({
         {action && (
           <button
             onClick={() => {
-              if (action.href === '/anuncios') {
-                useModalStore.getState().setCurrentView('anuncios');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              } else {
-                useModalStore.getState().setCurrentView('home');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
+              const view = VIEW_MAP[action.href];
+              if (view) navigateTo(view);
             }}
             className="group flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors whitespace-nowrap shrink-0"
           >

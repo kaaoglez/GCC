@@ -20,6 +20,7 @@ import { formatDate } from '@/lib/format';
 import { ARTICLE_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type { ArticleCategory } from '@/lib/types';
+import { navigateBack } from '@/hooks/use-navigation';
 
 const ARTICLE_CATEGORY_COLORS: Record<ArticleCategory, string> = {
   ENVIRONMENT: '#52B788',
@@ -42,8 +43,6 @@ export function ArticleReadingView() {
   const {
     selectedArticle,
     isArticleReadingView,
-    closeArticleReadingView,
-    setCurrentView,
   } = useModalStore();
 
   // Scroll to top when entering reading view
@@ -77,9 +76,7 @@ export function ArticleReadingView() {
   };
 
   const handleBack = () => {
-    closeArticleReadingView();
-    setCurrentView('news');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateBack();
   };
 
   return (

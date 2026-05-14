@@ -38,14 +38,13 @@ import { useModalStore } from '@/lib/modal-store';
 import { formatCalendarDate, formatDate, formatTime } from '@/lib/format';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { navigateBack } from '@/hooks/use-navigation';
 
 export function EventFullView() {
   const { locale, tp } = useI18n();
   const {
     selectedEvent,
     isEventFullView,
-    closeEventFullView,
-    setCurrentView,
   } = useModalStore();
 
   const [isZoomed, setIsZoomed] = useState(false);
@@ -114,9 +113,7 @@ export function EventFullView() {
   };
 
   const handleBack = () => {
-    closeEventFullView();
-    setCurrentView('eventos');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateBack();
   };
 
   return (

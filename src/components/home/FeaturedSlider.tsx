@@ -29,7 +29,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function FeaturedSlider() {
-  const { tp } = useI18n();
+  const { t, tp } = useI18n();
   const [allListings, setAllListings] = useState<ListingDTO[]>([]);
   const [displayList, setDisplayList] = useState<ListingDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,8 +60,9 @@ export function FeaturedSlider() {
       try {
         const res = await fetch('/api/listings/featured');
         if (res.ok) {
-          const data = await res.json();
-          const list = Array.isArray(data) ? data : [];
+          const json = await res.json();
+          // API returns paginated { data: [...], total, ... } — extract array
+          const list = Array.isArray(json) ? json : (Array.isArray(json.data) ? json.data : []);
           setAllListings(list);
           setDisplayList(shuffle(list)); // Random order on first load
         }
@@ -150,7 +151,7 @@ export function FeaturedSlider() {
               ? 'Los mejores anuncios destacados de la comunidad'
               : 'The best featured listings from the community'
         }
-        action={{ label: tp('listings', 'viewAll'), href: '/anuncios' }}
+        action={{ label: t('listings', 'viewAll'), href: '/anuncios' }}
       >
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

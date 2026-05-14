@@ -35,6 +35,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useI18n } from '@/hooks/use-i18n';
 import { useModalStore } from '@/lib/modal-store';
+import { useSession } from 'next-auth/react';
+import { navigateBack } from '@/hooks/use-navigation';
 import { TierBadge } from '@/components/shared/TierBadge';
 import { CategoryBadge } from '@/components/shared/CategoryBadge';
 import { formatPrice, getRelativeTime, formatDate } from '@/lib/format';
@@ -136,9 +138,11 @@ export function ListingFullView() {
   const {
     selectedListing,
     isListingFullView,
-    closeListingFullView,
-    setCurrentView,
+    openPayment,
+    openMessage,
+    openAuth,
   } = useModalStore();
+  const { data: session } = useSession();
 
   // Derived values needed by hooks (before early return)
   const images = selectedListing?.images || [];
@@ -233,9 +237,7 @@ export function ListingFullView() {
   };
 
   const handleBack = () => {
-    closeListingFullView();
-    setCurrentView('anuncios');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateBack();
   };
 
   // Filter metadata: exclude 'price' and empty values
@@ -578,7 +580,22 @@ export function ListingFullView() {
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-2">
-              <Button className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
+              <Button
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                onClick={() => {
+                  if (!session?.user?.id) {
+                    openAuth();
+                    return;
+                  }
+                  openMessage({
+                    receiverId: listing.author.id,
+                    receiverName: listing.author.name,
+                    listingId: listing.id,
+                    listingTitle: listing.title,
+                    listingImage: listing.images?.[0],
+                  });
+                }}
+              >
                 <MessageSquare className="size-4" />
                 {tp('listings', 'contact')}
               </Button>
@@ -623,7 +640,18 @@ export function ListingFullView() {
 
             {/* Bump */}
             {listing.tier !== 'BUSINESS' && (
-              <Button variant="outline" className="w-full gap-2 border-dashed">
+              <Button
+                variant="outline"
+                className="w-full gap-2 border-dashed"
+                onClick={() => {
+                  openPayment({
+                    type: 'BUMP',
+                    listingId: listing.id,
+                    amount: 3,
+                    listingTitle: listing.title,
+                  });
+                }}
+              >
                 <ArrowUpCircle className="size-4" />
                 {tp('listings', 'bump')} (€3)
               </Button>
@@ -703,6 +731,15 @@ export function ListingFullView() {
                       <Button
                         className="flex-1 font-semibold text-white text-sm"
                         style={{ backgroundColor: nextTier.color }}
+                        onClick={() => {
+                          const paymentType = nextTier.id === 'HIGHLIGHTED' ? 'HIGHLIGHT_UPGRADE' : 'VIP_UPGRADE';
+                          openPayment({
+                            type: paymentType,
+                            listingId: listing.id,
+                            amount: nextTier.price,
+                            listingTitle: listing.title,
+                          });
+                        }}
                       >
                         {locale === 'es'
                           ? `Mejorar a ${nextTier.nameEs} — €${nextTier.price}`

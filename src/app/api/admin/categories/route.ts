@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import type { CategoryDTO } from '@/lib/types';
+import { adminUpdateCategorySchema, validateBody } from '@/lib/validations';
 
 // GET /api/admin/categories — All categories with listing counts and revenue
 export async function GET() {
@@ -84,14 +85,12 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id } = body;
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Missing required field: id' },
-        { status: 400 }
-      );
+    const validation = validateBody(adminUpdateCategorySchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+    const validatedData = validation.data;
+    const { id } = validatedData;
 
     // Verify category exists
     const existing = await db.category.findUnique({ where: { id } });
@@ -127,19 +126,19 @@ export async function PUT(request: NextRequest) {
     ];
 
     for (const field of updatableFields) {
-      if (body[field] !== undefined) {
-        updateData[field] = body[field];
+      if (validatedData[field] !== undefined) {
+        updateData[field] = validatedData[field];
       }
     }
 
     // Handle allowedFields as JSON
-    if (body.allowedFields !== undefined) {
-      updateData.allowedFields = JSON.stringify(body.allowedFields);
+    if (validatedData.allowedFields !== undefined) {
+      updateData.allowedFields = JSON.stringify(validatedData.allowedFields);
     }
 
     // Update slug if nameEs changed
-    if (body.nameEs && body.nameEs !== existing.nameEs) {
-      const baseSlug = body.nameEs
+    if (validatedData.nameEs && validatedData.nameEs !== existing.nameEs) {
+      const baseSlug = validatedData.nameEs
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')

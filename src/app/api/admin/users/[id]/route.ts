@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { mapListingToDTO } from '@/app/api/listings/route';
+import { mapListingToDTO } from '@/lib/map-listing';
 import type { UserRole, ListingDTO } from '@/lib/types';
+import { adminUpdateUserFieldsSchema, validateBody } from '@/lib/validations';
 
 interface AdminUserDetailDTO {
   id: string;
@@ -126,6 +127,11 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
+    const validation = validateBody(adminUpdateUserFieldsSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+    const validatedData = validation.data;
 
     // Verify user exists
     const existing = await db.user.findUnique({ where: { id } });
@@ -160,14 +166,14 @@ export async function PUT(
     ];
 
     for (const field of updatableFields) {
-      if (body[field] !== undefined) {
-        updateData[field] = body[field];
+      if (validatedData[field] !== undefined) {
+        updateData[field] = validatedData[field];
       }
     }
 
     // Handle businessHours as JSON
-    if (body.businessHours !== undefined) {
-      updateData.businessHours = JSON.stringify(body.businessHours);
+    if (validatedData.businessHours !== undefined) {
+      updateData.businessHours = JSON.stringify(validatedData.businessHours);
     }
 
     if (Object.keys(updateData).length === 0) {

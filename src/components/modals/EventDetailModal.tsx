@@ -28,6 +28,7 @@ import {
   Leaf,
   CalendarIcon,
 } from 'lucide-react';
+import Image from 'next/image';
 
 export function EventDetailModal() {
   const { locale, tp } = useI18n();
@@ -48,7 +49,7 @@ export function EventDetailModal() {
       if (overlay) {
         overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
         overlay.style.backdropFilter = 'blur(4px)';
-        overlay.style.webkitBackdropFilter = 'blur(4px)';
+        (overlay.style as unknown as Record<string, string>)['webkitBackdropFilter'] = 'blur(4px)';
         clearInterval(interval);
       }
     }, 50);
@@ -87,7 +88,7 @@ export function EventDetailModal() {
         {/* Image with calendar date overlay */}
         <div className="relative aspect-[4/3] w-full bg-muted overflow-hidden">
           {event.image ? (
-            <img src={event.image} alt={event.title} className="h-full w-full object-cover" />
+            <Image src={event.image} alt={event.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-primary/10">
               <CalendarIcon className="size-12 text-primary/30" />

@@ -15,7 +15,7 @@ import { useModalStore } from '@/lib/modal-store';
 import type { CategoryDTO } from '@/lib/types';
 
 export function CategoryGrid() {
-  const { locale, tp } = useI18n();
+  const { locale, t, tp } = useI18n();
   const openSearch = useModalStore((s) => s.openSearch);
   const [categories, setCategories] = useState<CategoryDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,8 +47,8 @@ export function CategoryGrid() {
       transition={{ duration: 0.5 }}
     >
       <SectionContainer
-        title={tp('categoriesSection', 'title')}
-        subtitle={tp('categoriesSection', 'subtitle')}
+        title={t('categoriesSection', 'title')}
+        subtitle={t('categoriesSection', 'subtitle')}
         action={{ label: { es: 'Ver todo', en: 'View all' }, href: '/categorias' }}
       >
         {loading ? (

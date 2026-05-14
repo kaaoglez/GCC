@@ -2,8 +2,21 @@
 
 import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { useTheme } from 'next-themes';
+import { useSession, signOut } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { Leaf, Sun, Moon, Globe, Plus, Menu, Shield, Home } from 'lucide-react';
+import {
+  Leaf,
+  Sun,
+  Moon,
+  Globe,
+  Plus,
+  Menu,
+  Shield,
+  Home,
+  LogOut,
+  User,
+  FileText,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -11,11 +24,24 @@ import {
   SheetTrigger,
   SheetTitle,
 } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useI18n } from '@/hooks/use-i18n';
 import { NAV_ITEMS, APP_CONFIG } from '@/lib/constants';
 import { useAdminStore } from '@/lib/admin-store';
 import { useModalStore, type PageView } from '@/lib/modal-store';
+import { navigateTo, navigateToSameOrHome } from '@/hooks/use-navigation';
 
 /* ── Hydration-safe client check via useSyncExternalStore ─────────── */
 const emptySubscribe = () => () => {};
@@ -57,6 +83,81 @@ function ThemeToggle({ className }: { className?: string }) {
   );
 }
 
+/* ── User Menu (shown when logged in) ────────────────────── */
+function UserMenu() {
+  const { data: session } = useSession();
+  const { tp } = useI18n();
+  const openAuth = useModalStore((s) => s.openAuth);
+
+  if (!session?.user) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-muted-foreground hover:text-primary"
+        onClick={openAuth}
+      >
+        {tp('nav', 'login')}
+      </Button>
+    );
+  }
+
+  const user = session.user;
+  const initials = user.name
+    ? user.name
+        .split(' ')
+        .map((n) => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+    : 'U';
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className="flex items-center gap-2 px-2 text-muted-foreground hover:text-foreground"
+        >
+          <Avatar className="h-7 w-7">
+            {user.image && <AvatarImage src={user.image} alt={user.name} />}
+            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <span className="hidden md:inline-block text-sm font-medium max-w-[120px] truncate">
+            {user.name}
+          </span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        {/* User info header */}
+        <div className="px-2 py-1.5">
+          <p className="text-sm font-medium truncate">{user.name}</p>
+          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="cursor-pointer gap-2">
+          <User className="h-4 w-4" />
+          {tp('auth', 'myProfile')}
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer gap-2">
+          <FileText className="h-4 w-4" />
+          {tp('auth', 'myListings')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+          onClick={() => signOut({ callbackUrl: '/' })}
+        >
+          <LogOut className="h-4 w-4" />
+          {tp('auth', 'logout')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 /* ── Mapping from navKeys index to PageView ─────────────────────── */
 const NAV_KEY_TO_VIEW: PageView[] = [
   'anuncios',   // ads
@@ -73,10 +174,8 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const currentView = useModalStore((s) => s.currentView);
-  const setCurrentView = useModalStore((s) => s.setCurrentView);
-  const closeListingFullView = useModalStore((s) => s.closeListingFullView);
-  const closeEventFullView = useModalStore((s) => s.closeEventFullView);
-  const closeArticleReadingView = useModalStore((s) => s.closeArticleReadingView);
+  const openAuth = useModalStore((s) => s.openAuth);
+  const { data: session } = useSession();
 
   // Scroll detection via event subscription (proper effect usage)
   useEffect(() => {
@@ -94,25 +193,14 @@ export function Navbar() {
 
   const handleNavClick = (index: number) => {
     const view = NAV_KEY_TO_VIEW[index];
-    if (view) {
-      // Close any open full views / reading views so navigation works
-      closeListingFullView();
-      closeEventFullView();
-      closeArticleReadingView();
-      setCurrentView(view);
-      closeMobile();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    if (!view) return;
+    navigateTo(view);
+    closeMobile();
   };
 
   const handleHomeClick = () => {
-    // Close any open full views / reading views so navigation works
-    closeListingFullView();
-    closeEventFullView();
-    closeArticleReadingView();
-    setCurrentView('home');
+    navigateToSameOrHome('home');
     closeMobile();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -196,15 +284,14 @@ export function Navbar() {
             <Shield className="h-4 w-4" />
           </Button>
 
-          {/* Login Button */}
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-            {tp('nav', 'login')}
-          </Button>
+          {/* Login / User Menu */}
+          <UserMenu />
 
           {/* CTA: Post Ad */}
           <Button
             size="sm"
             className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 font-semibold shadow-sm"
+            onClick={() => useModalStore.getState().openPostAd()}
           >
             <Plus className="h-4 w-4" />
             {tp('nav', 'postAd')}
@@ -298,18 +385,77 @@ export function Navbar() {
 
                   {/* Auth Links */}
                   <div className="space-y-1 px-2">
-                    <button
-                      onClick={closeMobile}
-                      className="flex items-center w-full px-3 py-2.5 text-sm font-medium text-foreground hover:text-primary hover:bg-muted rounded-lg transition-colors"
-                    >
-                      {tp('nav', 'login')}
-                    </button>
+                    {session?.user ? (
+                      <>
+                        <div className="flex items-center gap-2 px-3 py-2.5">
+                          <Avatar className="h-8 w-8">
+                            {session.user.image && (
+                              <AvatarImage src={session.user.image} alt={session.user.name} />
+                            )}
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                              {session.user.name
+                                ?.split(' ')
+                                .map((n) => n[0])
+                                .slice(0, 2)
+                                .join('')
+                                .toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {session.user.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {session.user.email}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            closeMobile();
+                          }}
+                          className="flex items-center gap-2 w-full px-3 py-2.5 text-sm font-medium text-foreground hover:text-primary hover:bg-muted rounded-lg transition-colors"
+                        >
+                          <User className="size-4" />
+                          {tp('auth', 'myProfile')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            closeMobile();
+                          }}
+                          className="flex items-center gap-2 w-full px-3 py-2.5 text-sm font-medium text-foreground hover:text-primary hover:bg-muted rounded-lg transition-colors"
+                        >
+                          <FileText className="size-4" />
+                          {tp('auth', 'myListings')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            closeMobile();
+                            signOut({ callbackUrl: '/' });
+                          }}
+                          className="flex items-center gap-2 w-full px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                        >
+                          <LogOut className="size-4" />
+                          {tp('auth', 'logout')}
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          closeMobile();
+                          openAuth();
+                        }}
+                        className="flex items-center w-full px-3 py-2.5 text-sm font-medium text-foreground hover:text-primary hover:bg-muted rounded-lg transition-colors"
+                      >
+                        {tp('nav', 'login')}
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 {/* Mobile Footer CTA */}
                 <div className="p-4 border-t border-border">
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2 font-semibold shadow-sm">
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2 font-semibold shadow-sm" onClick={() => useModalStore.getState().openPostAd()}>
                     <Plus className="h-4 w-4" />
                     {tp('nav', 'postAd')}
                   </Button>

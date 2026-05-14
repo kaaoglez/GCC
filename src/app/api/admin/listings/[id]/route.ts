@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { adminUpdateListingSchema, validateBody } from '@/lib/validations';
 
 // PUT /api/admin/listings/[id] — update tier or status
 export async function PUT(
@@ -9,11 +10,11 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { tier, status } = body as { tier?: string; status?: string };
-
-    if (!tier && !status) {
-      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    const validation = validateBody(adminUpdateListingSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+    const { tier, status } = validation.data;
 
     const updateData: Record<string, unknown> = {};
     if (tier) updateData.tier = tier;

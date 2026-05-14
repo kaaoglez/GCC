@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,7 +36,7 @@ export function SearchResultsModal() {
       if (overlay) {
         overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
         overlay.style.backdropFilter = 'blur(6px)';
-        overlay.style.webkitBackdropFilter = 'blur(6px)';
+        (overlay.style as unknown as Record<string, string>)['webkitBackdropFilter'] = 'blur(6px)';
         clearInterval(interval);
       }
     }, 50);
@@ -90,6 +91,11 @@ export function SearchResultsModal() {
   return (
     <Dialog open={isSearchOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 [&>button]:hidden">
+        <DialogTitle className="sr-only">
+          {hasQuery
+            ? tp('searchResults', 'resultsFor').replace('{query}', searchQuery || (searchCategoryId ? tp('search', 'allCategories') : ''))
+            : locale === 'es' ? 'Todos los anuncios' : 'All listings'}
+        </DialogTitle>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
           <div>

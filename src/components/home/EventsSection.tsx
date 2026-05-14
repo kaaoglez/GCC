@@ -15,7 +15,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import type { EventDTO, PaginatedResponse } from '@/lib/types';
 
 export function EventsSection() {
-  const { tp } = useI18n();
+  const { t, tp } = useI18n();
   const [events, setEvents] = useState<EventDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,8 +44,8 @@ export function EventsSection() {
       transition={{ duration: 0.5 }}
     >
       <SectionContainer
-        title={tp('events', 'title')}
-        action={{ label: tp('events', 'viewAll'), href: '/eventos' }}
+        title={t('events', 'title')}
+        action={{ label: t('events', 'viewAll'), href: '/eventos' }}
       >
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

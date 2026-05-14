@@ -11,6 +11,7 @@ import { useModalStore } from '@/lib/modal-store';
 import { formatCalendarDate, formatTime } from '@/lib/format';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 import { MapPin, Clock, Leaf, ImageOff } from 'lucide-react';
 import type { EventDTO } from '@/lib/types';
 
@@ -58,10 +59,12 @@ export function EventCard({ event, className }: EventCardProps) {
           {/* Image */}
           <div className="relative flex-1 aspect-[16/9] min-w-0 overflow-hidden bg-muted">
             {event.image ? (
-              <img
+              <Image
                 src={event.image}
                 alt={event.title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-muted-foreground">

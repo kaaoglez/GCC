@@ -19,6 +19,7 @@ import {
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useI18n } from '@/hooks/use-i18n';
 import { useModalStore, type PageView } from '@/lib/modal-store';
+import { navigateBack } from '@/hooks/use-navigation';
 
 interface ComingSoonPageProps {
   viewKey: Exclude<PageView, 'home' | 'anuncios' | 'eventos'>;
@@ -51,7 +52,7 @@ export function ComingSoonPage({ viewKey }: ComingSoonPageProps) {
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
               <button
-                onClick={() => setCurrentView('home')}
+                onClick={() => navigateBack()}
                 className="hover:text-primary transition-colors flex items-center gap-1"
               >
                 <Home className="size-3.5" />
@@ -73,7 +74,7 @@ export function ComingSoonPage({ viewKey }: ComingSoonPageProps) {
         description={tp('pages', 'comingSoonMsg')}
         action={{
           label: tp('common', 'backHome'),
-          onClick: () => setCurrentView('home'),
+          onClick: () => navigateBack(),
         }}
       />
     </motion.div>

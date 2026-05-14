@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import type { CategoryDTO, Locale } from '@/lib/types';
 
+// Force dynamic — never cache, always read fresh from DB
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET /api/categories?locale=es|en
 export async function GET(request: NextRequest) {
   try {
@@ -68,7 +72,7 @@ function mapToDTO(
     price: number | null;
     highlightPrice: number | null;
     vipPrice: number | null;
-    allowedFields: string;
+    allowedFields: string | null;
     showPrice: boolean;
     showLocation: boolean;
     showImages: boolean;

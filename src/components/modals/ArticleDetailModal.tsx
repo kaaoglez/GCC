@@ -18,6 +18,7 @@ import { useModalStore } from '@/lib/modal-store';
 import { formatDate } from '@/lib/format';
 import { ARTICLE_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 import type { ArticleCategory } from '@/lib/types';
 
 const ARTICLE_CATEGORY_COLORS: Record<ArticleCategory, string> = {
@@ -65,7 +66,7 @@ export function ArticleDetailModal() {
       if (overlay) {
         overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
         overlay.style.backdropFilter = 'blur(6px)';
-        overlay.style.webkitBackdropFilter = 'blur(6px)';
+        (overlay.style as unknown as Record<string, string>)['webkitBackdropFilter'] = 'blur(6px)';
         clearInterval(interval);
       }
     }, 50);
@@ -117,10 +118,12 @@ export function ArticleDetailModal() {
         {/* Image hero */}
         <div className="relative aspect-[16/7] w-full bg-muted shrink-0 overflow-hidden">
           {article.image ? (
-            <img
+            <Image
               src={article.image}
               alt={article.title}
-              className="h-full w-full object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">

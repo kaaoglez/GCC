@@ -38,6 +38,7 @@ import { ListingCard } from '@/components/shared/ListingCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useI18n } from '@/hooks/use-i18n';
 import { useModalStore } from '@/lib/modal-store';
+import { navigateBack } from '@/hooks/use-navigation';
 import { MUNICIPALITIES } from '@/lib/types';
 import type { ListingDTO, CategoryDTO, PaginatedResponse } from '@/lib/types';
 
@@ -47,6 +48,8 @@ export function AnunciosPage() {
   const { locale, tp } = useI18n();
   const setCurrentView = useModalStore((s) => s.setCurrentView);
   const openListingDetail = useModalStore((s) => s.openListingDetail);
+  const selectedCategoryId = useModalStore((s) => s.selectedCategoryId);
+  const setSelectedCategoryId = useModalStore((s) => s.setSelectedCategoryId);
 
   // ── Filter State ──────────────────────────────────────────
   const [search, setSearch] = useState('');
@@ -54,6 +57,14 @@ export function AnunciosPage() {
   const [municipality, setMunicipality] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [page, setPage] = useState(1);
+
+  // ── Apply selectedCategoryId from store on mount ──────────
+  useEffect(() => {
+    if (selectedCategoryId) {
+      setCategoryId(selectedCategoryId);
+      setSelectedCategoryId(null);
+    }
+  }, [selectedCategoryId, setSelectedCategoryId]);
 
   // ── Data State ────────────────────────────────────────────
   const [categories, setCategories] = useState<CategoryDTO[]>([]);
@@ -199,7 +210,7 @@ export function AnunciosPage() {
               asChild
             >
               <button
-                onClick={() => setCurrentView('home')}
+                onClick={() => navigateBack()}
                 className="hover:text-primary transition-colors flex items-center gap-1"
               >
                 <Home className="size-3.5" />

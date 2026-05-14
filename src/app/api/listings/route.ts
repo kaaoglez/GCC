@@ -4,12 +4,11 @@ import type {
   ListingDTO,
   ListingCreateDTO,
   PaginatedResponse,
-  CategoryDTO,
-  UserSummaryDTO,
   ListingTier,
   ListingStatus,
-  Locale,
 } from '@/lib/types';
+import { mapListingToDTO } from '@/lib/map-listing';
+import { createListingSchema, validateBody } from '@/lib/validations';
 
 // GET /api/listings?categoryId=&municipality=&tier=&search=&page=&limit=&sortBy=
 export async function GET(request: NextRequest) {
@@ -22,7 +21,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || undefined;
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '12', 10)));
-    const sortBy = (searchParams.get('sortBy') as ListingDTO['tier'] | 'newest' | 'oldest' | 'popular') || 'newest';
+    const sortBy = (searchParams.get('sortBy') as 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'popular') || 'newest';
 
     // Build where clause
     const where: Record<string, unknown> = { status: 'ACTIVE' };
@@ -130,16 +129,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const validation = validateBody(createListingSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
 
     // Validate required fields
-    const { title, description, categoryId, authorId, tier } = body;
-
-    if (!title || !description || !categoryId) {
-      return NextResponse.json(
-        { error: 'Missing required fields: title, description, categoryId' },
-        { status: 400 }
-      );
-    }
+    const { title, description, categoryId, authorId, tier, metadata, images, municipality, location, lat, lng, showPhone, showEmail, contactMethod } = validation.data;
 
     // Verify category exists
     const category = await db.category.findUnique({
@@ -179,15 +175,15 @@ export async function POST(request: NextRequest) {
       description,
       categoryId,
       tier: tier || 'FREE',
-      metadata: body.metadata || {},
-      images: body.images || [],
-      municipality: body.municipality,
-      location: body.location,
-      lat: body.lat,
-      lng: body.lng,
-      showPhone: body.showPhone ?? false,
-      showEmail: body.showEmail ?? true,
-      contactMethod: body.contactMethod || 'message',
+      metadata: metadata || {},
+      images: images || [],
+      municipality,
+      location,
+      lat,
+      lng,
+      showPhone: showPhone ?? false,
+      showEmail: showEmail ?? true,
+      contactMethod: contactMethod || 'message',
     };
 
     const listing = await db.listing.create({
@@ -235,151 +231,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Shared mapper: Prisma listing -> ListingDTO
-export function mapListingToDTO(listing: {
-  id: string;
-  slug: string;
-  title: string;
-  description: string;
-  categoryId: string;
-  category: {
-    id: string;
-    slug: string;
-    nameEs: string;
-    nameEn: string;
-    descEs: string | null;
-    descEn: string | null;
-    icon: string;
-    color: string;
-    parentId: string | null;
-    sortOrder: number;
-    isActive: boolean;
-    isPaid: boolean;
-    price: number | null;
-    highlightPrice: number | null;
-    vipPrice: number | null;
-    allowedFields: string;
-    showPrice: boolean;
-    showLocation: boolean;
-    showImages: boolean;
-    maxImages: number;
-    expiryDays: number;
-  };
-  authorId: string;
-  author: {
-    id: string;
-    name: string;
-    avatar: string | null;
-    municipality: string | null;
-    isVerified: boolean;
-    role: string;
-    businessName: string | null;
-  };
-  tier: string;
-  metadata: string;
-  images: string;
-  municipality: string | null;
-  location: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: string;
-  expiresAt: Date | null;
-  bumpedAt: Date | null;
-  publishedAt: Date | null;
-  viewCount: number;
-  contactCount: number;
-  showPhone: boolean;
-  showEmail: boolean;
-  contactMethod: string;
-  createdAt: Date;
-  updatedAt: Date;
-}): ListingDTO {
-  let metadata: Record<string, unknown> = {};
-  try {
-    metadata = JSON.parse(listing.metadata || '{}');
-  } catch {
-    metadata = {};
-  }
-
-  let images: string[] = [];
-  try {
-    images = JSON.parse(listing.images || '[]');
-  } catch {
-    images = [];
-  }
-
-  let allowedFields: CategoryDTO['allowedFields'] = [];
-  try {
-    allowedFields = JSON.parse(listing.category.allowedFields || '[]');
-  } catch {
-    allowedFields = [];
-  }
-
-  const author: UserSummaryDTO = {
-    id: listing.author.id,
-    name: listing.author.name,
-    avatar: listing.author.avatar ?? undefined,
-    municipality: listing.author.municipality ?? undefined,
-    isVerified: listing.author.isVerified,
-    role: listing.author.role as ListingDTO['author']['role'],
-    businessName: listing.author.businessName ?? undefined,
-  };
-
-  const category: CategoryDTO = {
-    id: listing.category.id,
-    slug: listing.category.slug,
-    nameEs: listing.category.nameEs,
-    nameEn: listing.category.nameEn,
-    descEs: listing.category.descEs ?? undefined,
-    descEn: listing.category.descEn ?? undefined,
-    icon: listing.category.icon,
-    color: listing.category.color,
-    parentId: listing.category.parentId ?? undefined,
-    sortOrder: listing.category.sortOrder,
-    isActive: listing.category.isActive,
-    isPaid: listing.category.isPaid,
-    price: listing.category.price ?? undefined,
-    highlightPrice: listing.category.highlightPrice ?? undefined,
-    vipPrice: listing.category.vipPrice ?? undefined,
-    allowedFields,
-    showPrice: listing.category.showPrice,
-    showLocation: listing.category.showLocation,
-    showImages: listing.category.showImages,
-    maxImages: listing.category.maxImages,
-    expiryDays: listing.category.expiryDays,
-  };
-
-  return {
-    id: listing.id,
-    slug: listing.slug,
-    title: listing.title,
-    description: listing.description,
-    categoryId: listing.categoryId,
-    category,
-    authorId: listing.authorId,
-    author,
-    tier: listing.tier as ListingDTO['tier'],
-    metadata,
-    images,
-    municipality: listing.municipality ?? undefined,
-    location: listing.location ?? undefined,
-    lat: listing.lat ?? undefined,
-    lng: listing.lng ?? undefined,
-    status: listing.status as ListingStatus,
-    expiresAt: listing.expiresAt?.toISOString(),
-    bumpedAt: listing.bumpedAt?.toISOString(),
-    publishedAt: listing.publishedAt?.toISOString(),
-    viewCount: listing.viewCount,
-    contactCount: listing.contactCount,
-    showPhone: listing.showPhone,
-    showEmail: listing.showEmail,
-    contactMethod: listing.contactMethod as ListingDTO['contactMethod'],
-    createdAt: listing.createdAt.toISOString(),
-    updatedAt: listing.updatedAt.toISOString(),
-    // Computed from metadata
-    price: (metadata.price as number) ?? undefined,
-    condition: (metadata.condition as string) ?? undefined,
-  };
 }

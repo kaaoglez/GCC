@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import type { PaymentType, PaymentStatus, ListingTier, PaginatedResponse } from '@/lib/types';
+import { adminCreatePaymentSchema, validateBody } from '@/lib/validations';
 
 interface AdminPaymentDTO {
   id: string;
@@ -118,14 +119,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, listingId, type, amount, note } = body;
-
-    if (!userId || !type || amount === undefined) {
-      return NextResponse.json(
-        { error: 'Missing required fields: userId, type, amount' },
-        { status: 400 }
-      );
+    const validation = validateBody(adminCreatePaymentSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+    const { userId, listingId, type, amount, note } = validation.data;
 
     // Verify user exists
     const user = await db.user.findUnique({ where: { id: userId } });

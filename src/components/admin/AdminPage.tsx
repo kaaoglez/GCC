@@ -11,6 +11,11 @@ import { AdminPromotions } from './AdminPromotions';
 import { AdminUsers } from './AdminUsers';
 import { AdminCategories } from './AdminCategories';
 import { AdminPayments } from './AdminPayments';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
 
 const pages: Record<string, React.FC> = {
@@ -27,7 +32,6 @@ export function AdminPage() {
   const setAdminView = useModalStore((s) => s.setAdminView);
   const prevDarkClass = useRef<boolean | null>(null);
 
-  // Remove 'dark' class while admin page is open
   useEffect(() => {
     const html = document.documentElement;
     prevDarkClass.current = html.classList.contains('dark');
@@ -38,26 +42,24 @@ export function AdminPage() {
     };
   }, []);
 
-  const closeAdmin = () => {
-    logout();
-    setAdminView(false);
-    window.location.href = '/';
-  };
-
-  // Not logged in: show login screen
+  // Not logged in: just the login popup (page.tsx shows the site behind)
   if (!isAdmin) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="min-h-screen bg-slate-50 flex items-center justify-center p-4"
-      >
-        <AdminLogin />
-      </motion.div>
+      <Dialog open onOpenChange={(open) => { if (!open) setAdminView(false); }}>
+        <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+          <DialogTitle className="sr-only">Admin Login</DialogTitle>
+          <AdminLogin />
+        </DialogContent>
+      </Dialog>
     );
   }
 
-  // Logged in: show admin panel full-page
+  // Logged in: full admin panel
+  const handleBack = () => {
+    logout();
+    setAdminView(false);
+  };
+
   const PageComponent = pages[activePage] || AdminDashboard;
 
   return (
@@ -67,7 +69,7 @@ export function AdminPage() {
       transition={{ duration: 0.2 }}
       className="min-h-screen bg-slate-50"
     >
-      <AdminLayout>
+      <AdminLayout onBack={handleBack}>
         <PageComponent />
       </AdminLayout>
     </motion.div>

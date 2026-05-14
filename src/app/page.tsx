@@ -19,16 +19,26 @@ import { EventFullView } from '@/components/modals/EventFullView';
 import { AdminPage } from '@/components/admin/AdminPage';
 import { AnunciosPage } from '@/components/pages/AnunciosPage';
 import { EventosPage } from '@/components/pages/EventosPage';
-import { ComingSoonPage } from '@/components/pages/ComingSoonPage';
+
+import { CategoriasPage } from '@/components/pages/CategoriasPage';
 import { NoticiasPage } from '@/components/pages/NoticiasPage';
 import { ReciclajePage } from '@/components/pages/ReciclajePage';
 import { DirectorioPage } from '@/components/pages/DirectorioPage';
-import { useModalStore } from '@/lib/modal-store';
+import { MessagesPage } from '@/components/modals/MessagesPage';
+import { useModalStore, __registerHistoryPush } from '@/lib/modal-store';
 import { useAdminStore } from '@/lib/admin-store';
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
+import { useNavigation, pushNavigationState } from '@/hooks/use-navigation';
 
 export default function Home() {
+  useNavigation(); // Initialize browser history sync
+
+  // Register history push function with the store
+  useEffect(() => {
+    __registerHistoryPush(pushNavigationState);
+  }, []);
+
   const searchParams = useSearchParams();
   const isAdmin = useAdminStore((s) => s.isAdmin);
   const currentView = useModalStore((s) => s.currentView);
@@ -40,18 +50,16 @@ export default function Home() {
   const selectedListing = useModalStore((s) => s.selectedListing);
   const selectedEvent = useModalStore((s) => s.selectedEvent);
 
-  // Auto-activate admin view from URL param or admin store
   useEffect(() => {
     const shouldShow = searchParams.get('admin') === '1' || isAdmin;
     if (shouldShow) setAdminView(true);
   }, [searchParams, isAdmin, setAdminView]);
 
-  // Admin view: full page, no Navbar/Footer
-  if (isAdminView) {
+  // Admin logged in: full page, no Navbar/Footer
+  if (isAdminView && isAdmin) {
     return <AdminPage />;
   }
 
-  // Determine what to render in the main area
   const renderMain = () => {
     if (isListingFullView) {
       return <ListingFullView key={`listing-${selectedListing?.id ?? 'none'}`} />;
@@ -93,7 +101,8 @@ export default function Home() {
     if (currentView === 'news') return <NoticiasPage />;
     if (currentView === 'directory') return <DirectorioPage />;
     if (currentView === 'recycling') return <ReciclajePage />;
-    if (currentView === 'categorias') return <ComingSoonPage viewKey="categorias" />;
+    if (currentView === 'categorias') return <CategoriasPage />;
+    if (currentView === 'messages') return <MessagesPage />;
 
     return null;
   };
@@ -104,6 +113,7 @@ export default function Home() {
       <main className="flex-1">{renderMain()}</main>
       <Footer />
       <HomeModals />
+      {isAdminView && <AdminPage />}
     </div>
   );
 }

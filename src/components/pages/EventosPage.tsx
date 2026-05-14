@@ -39,6 +39,7 @@ import { EventCard } from '@/components/shared/EventCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useI18n } from '@/hooks/use-i18n';
 import { useModalStore } from '@/lib/modal-store';
+import { navigateBack } from '@/hooks/use-navigation';
 import { MUNICIPALITIES, type EventCategory } from '@/lib/types';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import type { EventDTO, PaginatedResponse } from '@/lib/types';
@@ -190,7 +191,7 @@ export function EventosPage() {
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
               <button
-                onClick={() => setCurrentView('home')}
+                onClick={() => navigateBack()}
                 className="hover:text-primary transition-colors flex items-center gap-1"
               >
                 <Home className="size-3.5" />

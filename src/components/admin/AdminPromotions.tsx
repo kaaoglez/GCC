@@ -18,7 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
-import type { ListingDTO, ListingTier, CategoryDTO } from '@/lib/types';
+import type { ListingDTO, ListingTier, CategoryDTO, Locale } from '@/lib/types';
 import { PRICING_PLANS } from '@/lib/types';
 
 const PAID_TIERS: ListingTier[] = ['HIGHLIGHTED', 'VIP', 'BUSINESS'];
@@ -34,7 +34,7 @@ const tierBadge = (tier: string): React.CSSProperties => {
 };
 
 // ── Tab 1: VIP Slider Management ────────────────────────────────
-function VipSliderTab({ locale, tp }: { locale: string; tp: (k: string) => string }) {
+function VipSliderTab({ locale, tp }: { locale: Locale; tp: (k: string) => string }) {
   const [listings, setListings] = useState<ListingDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [sliderIds, setSliderIds] = useState<Set<string>>(new Set());
@@ -118,7 +118,7 @@ function VipSliderTab({ locale, tp }: { locale: string; tp: (k: string) => strin
 }
 
 // ── Tab 2: Featured by Category ─────────────────────────────────
-function CategoryFeaturedTab({ locale, tp }: { locale: string; tp: (k: string) => string }) {
+function CategoryFeaturedTab({ locale, tp }: { locale: Locale; tp: (k: string) => string }) {
   const [categories, setCategories] = useState<CategoryDTO[]>([]);
   const [selectedCat, setSelectedCat] = useState('');
   const [listings, setListings] = useState<ListingDTO[]>([]);
@@ -195,7 +195,7 @@ function CategoryFeaturedTab({ locale, tp }: { locale: string; tp: (k: string) =
 }
 
 // ── Tab 3: Business Directory ───────────────────────────────────
-function BusinessDirectoryTab({ locale, tp }: { locale: string; tp: (k: string) => string }) {
+function BusinessDirectoryTab({ locale, tp }: { locale: Locale; tp: (k: string) => string }) {
   const [listings, setListings] = useState<ListingDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [directoryIds, setDirectoryIds] = useState<Set<string>>(new Set());
@@ -268,7 +268,7 @@ function BusinessDirectoryTab({ locale, tp }: { locale: string; tp: (k: string) 
 }
 
 // ── Tab 4: Banner Ads ───────────────────────────────────────────
-function BannerAdsTab({ locale, tp }: { locale: string; tp: (k: string) => string }) {
+function BannerAdsTab({ locale, tp }: { locale: Locale; tp: (k: string) => string }) {
   const positions = [
     { id: 'header', labelEs: 'Cabecera de inicio', labelEn: 'Homepage header', icon: 'layout' },
     { id: 'sidebar', labelEs: 'Barra lateral', labelEn: 'Sidebar', icon: 'panel-right' },
@@ -312,7 +312,7 @@ function BannerAdsTab({ locale, tp }: { locale: string; tp: (k: string) => strin
 }
 
 // ── Tab 5: Promote Listing (Quick Workflow) ─────────────────────
-function PromoteListingTab({ locale, tp }: { locale: string; tp: (k: string) => string }) {
+function PromoteListingTab({ locale, tp }: { locale: Locale; tp: (k: string) => string }) {
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<ListingDTO[]>([]);
   const [searching, setSearching] = useState(false);

@@ -14,14 +14,8 @@ interface I18nState {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   toggleLocale: () => void;
-  t: <S extends TranslationSection>(
-    section: S,
-    key: string
-  ) => { es: string; en: string };
-  tp: <S extends TranslationSection>(
-    section: S,
-    key: string
-  ) => string;
+  t: (sectionOrPath: string, key?: string) => { es: string; en: string };
+  tp: (sectionOrPath: string, key?: string) => string;
 }
 
 export const useI18n = create<I18nState>()(
@@ -37,7 +31,24 @@ export const useI18n = create<I18nState>()(
         })),
 
       // Returns the full translation object { es: string, en: string }
-      t: (section, key) => {
+      // Supports both: t('admin', 'dashboard') and t('admin.dashboard')
+      t: (sectionOrPath, maybeKey) => {
+        let section: string;
+        let key: string;
+        if (maybeKey !== undefined) {
+          section = sectionOrPath as string;
+          key = maybeKey;
+        } else {
+          const path = sectionOrPath as string;
+          const dotIdx = path.indexOf('.');
+          if (dotIdx > 0) {
+            section = path.substring(0, dotIdx);
+            key = path.substring(dotIdx + 1);
+          } else {
+            section = path;
+            key = path;
+          }
+        }
         const sectionData = translations[section] as Record<string, { es: string; en: string }>;
         return sectionData?.[key] || { es: key, en: key };
       },

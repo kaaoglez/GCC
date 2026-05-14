@@ -15,7 +15,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import type { ArticleDTO, PaginatedResponse } from '@/lib/types';
 
 export function NewsSection() {
-  const { tp } = useI18n();
+  const { t, tp } = useI18n();
   const [articles, setArticles] = useState<ArticleDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,8 +44,8 @@ export function NewsSection() {
       transition={{ duration: 0.5 }}
     >
       <SectionContainer
-        title={tp('news', 'title')}
-        action={{ label: tp('news', 'viewAll'), href: '/noticias' }}
+        title={t('news', 'title')}
+        action={{ label: t('news', 'viewAll'), href: '/noticias' }}
       >
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { mapListingToDTO } from '../route';
+import { mapListingToDTO } from '@/lib/map-listing';
 
 // GET /api/listings/[id]
 export async function GET(

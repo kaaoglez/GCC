@@ -24,7 +24,7 @@ const PLAN_ICONS: Record<string, React.ElementType> = {
 };
 
 export function PricingSection() {
-  const { locale, tp } = useI18n();
+  const { locale, t, tp } = useI18n();
 
   return (
     <motion.div
@@ -34,8 +34,8 @@ export function PricingSection() {
       transition={{ duration: 0.5 }}
     >
       <SectionContainer
-        title={tp('pricing', 'title')}
-        subtitle={tp('pricing', 'subtitle')}
+        title={t('pricing', 'title')}
+        subtitle={t('pricing', 'subtitle')}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 items-stretch">
           {PRICING_PLANS.map((plan, index) => (

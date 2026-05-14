@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
@@ -15,6 +15,8 @@ import {
   Upload,
   Image as ImageIcon,
   Sparkles,
+  X,
+  Loader2,
 } from 'lucide-react';
 import {
   Dialog,
@@ -67,6 +69,11 @@ export function PostAdModal() {
   const [location, setLocation] = useState('');
   const [contactMethod, setContactMethod] = useState('message');
   const [images, setImages] = useState<string[]>([]);
+  const [uploadingIds, setUploadingIds] = useState<Set<string>>(new Set());
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const maxImages = selectedCategory?.maxImages ?? 5;
 
   // Fetch categories on mount
   useEffect(() => {
@@ -105,6 +112,8 @@ export function PostAdModal() {
     setLocation('');
     setContactMethod('message');
     setImages([]);
+    setUploadingIds(new Set());
+    setDragOver(false);
     setSuccess(false);
   }
 
@@ -163,6 +172,45 @@ export function PostAdModal() {
   const handleBack = () => {
     if (step > 0) setStep(step - 1);
   };
+
+  const uploadFiles = useCallback(
+    async (files: File[]) => {
+      const remaining = maxImages - images.length;
+      if (remaining <= 0) return;
+
+      const toUpload = files.slice(0, remaining);
+      const newIds = toUpload.map(() => `upload-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`);
+
+      setUploadingIds((prev) => new Set([...prev, ...newIds]));
+
+      const uploadPromises = toUpload.map(async (file, idx) => {
+        const uid = newIds[idx];
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setImages((prev) => [...prev, data.url]);
+          }
+        } catch {
+          // silent — upload failed for this file
+        } finally {
+          setUploadingIds((prev) => {
+            const next = new Set(prev);
+            next.delete(uid);
+            return next;
+          });
+        }
+      });
+
+      await Promise.all(uploadPromises);
+    },
+    [maxImages, images.length]
+  );
 
   // Flatten categories for selection (show children of parent categories)
   const allCategories = categories.flatMap((cat) =>
@@ -469,21 +517,100 @@ export function PostAdModal() {
                     </Select>
                   </div>
 
-                  {/* Image upload placeholder */}
+                  {/* Image upload */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">
-                      {tp('form', 'images')} ({images.length}/
-                      {selectedCategory?.maxImages ?? 5})
+                      {tp('form', 'images')} ({images.length}/{maxImages})
                     </label>
-                    <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
-                      <Upload className="size-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        {tp('form', 'dragDrop')}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        JPG, PNG, WebP — Max 5MB
-                      </p>
-                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (files) uploadFiles(Array.from(files));
+                        e.target.value = '';
+                      }}
+                    />
+                    {images.length < maxImages && (
+                      <div
+                        className={cn(
+                          'border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer',
+                          dragOver
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        )}
+                        onClick={() => fileInputRef.current?.click()}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDragOver(true);
+                        }}
+                        onDragEnter={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDragOver(true);
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDragOver(false);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDragOver(false);
+                          const files = Array.from(e.dataTransfer.files).filter(
+                            (f) => f.type.startsWith('image/')
+                          );
+                          if (files.length > 0) uploadFiles(files);
+                        }}
+                      >
+                        <Upload className="size-8 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          {tp('form', 'dragDrop')}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          JPG, PNG, WebP, GIF — Max 5MB
+                        </p>
+                      </div>
+                    )}
+                    {images.length > 0 && (
+                      <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                        {images.map((url, idx) => (
+                          <div
+                            key={url}
+                            className="relative group aspect-square rounded-lg overflow-hidden border border-border"
+                          >
+                            <img
+                              src={url}
+                              alt={`${tp('form', 'images')} ${idx + 1}`}
+                              className="size-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setImages((prev) => prev.filter((_, i) => i !== idx))
+                              }
+                              className="absolute top-1 right-1 size-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
+                            >
+                              <X className="size-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {uploadingIds.size > 0 &&
+                          Array.from(uploadingIds).map((id) => (
+                            <div
+                              key={id}
+                              className="aspect-square rounded-lg border border-border bg-muted flex items-center justify-center"
+                            >
+                              <Loader2 className="size-5 text-primary animate-spin" />
+                            </div>
+                          ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -507,11 +634,20 @@ export function PostAdModal() {
                     <>
                       {/* Preview Card */}
                       <div className="rounded-xl border bg-card overflow-hidden">
-                        <div className="aspect-video bg-muted flex items-center justify-center">
+                        <div className="aspect-video bg-muted flex items-center justify-center relative overflow-hidden">
                           {images.length > 0 ? (
-                            <ImageIcon className="size-12 text-muted-foreground/40" />
+                            <img
+                              src={images[0]}
+                              alt={title}
+                              className="size-full object-cover"
+                            />
                           ) : (
                             <ImageIcon className="size-12 text-muted-foreground/20" />
+                          )}
+                          {images.length > 1 && (
+                            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
+                              +{images.length - 1} {tp('listings', 'photos').toLowerCase()}
+                            </div>
                           )}
                         </div>
                         <div className="p-4 space-y-2">

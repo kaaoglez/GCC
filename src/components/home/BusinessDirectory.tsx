@@ -17,7 +17,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import type { ListingDTO, PaginatedResponse } from '@/lib/types';
 
 export function BusinessDirectory() {
-  const { tp } = useI18n();
+  const { t, tp } = useI18n();
   const [listings, setListings] = useState<ListingDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,9 +46,9 @@ export function BusinessDirectory() {
       transition={{ duration: 0.5 }}
     >
       <SectionContainer
-        title={tp('directory', 'title')}
-        subtitle={tp('directory', 'subtitle')}
-        action={{ label: tp('directory', 'viewAll'), href: '/directorio' }}
+        title={t('directory', 'title')}
+        subtitle={t('directory', 'subtitle')}
+        action={{ label: t('directory', 'viewAll'), href: '/directorio' }}
       >
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
